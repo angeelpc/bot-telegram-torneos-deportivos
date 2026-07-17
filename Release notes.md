@@ -87,3 +87,15 @@
   - *Salida:* Creación del directorio docs para almacenar documentación del proyecto.
 - `New-Item -Path "docs/estrategia_y_automatizacion.md"` (Simulado a través de la herramienta de escritura de archivos)
   - *Salida:* Archivo creado exitosamente con la definición del módulo 3.
+
+## Versión 2.2 (Herramientas de Demostración Comercial)
+
+### Cambios
+- Se creó el script `scripts/seed_demo.py` diseñado exclusivamente para inyectar datos ficticios en la base de datos de producción o pruebas locales.
+- El script toma el UUID de una categoría, crea 8 capitanes virtuales y 8 equipos de fantasía, auto-aprobándolos instantáneamente.
+- Esto resuelve la imposibilidad de simular torneos multijugador usando una sola cuenta de Telegram.
+
+### Comandos Ejecutados y Salida
+- `New-Item -ItemType Directory -Force -Path "scripts"` (Simulado)
+- Creación de `scripts/seed_demo.py`.
+
