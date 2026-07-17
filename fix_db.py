@@ -1,8 +1,15 @@
 import asyncio
 import asyncpg
 import sys
+import os
+from dotenv import load_dotenv
 
-DATABASE_URL = "postgresql://postgres:gdbWDOcUlVOQOjjwDFxiYLMHcRLARDrj@tokaido.proxy.rlwy.net:51769/railway"
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL")
+
+if not DATABASE_URL:
+    print("No DATABASE_URL set. Please set it in .env")
+    sys.exit(1)
 
 async def fix_db():
     try:
