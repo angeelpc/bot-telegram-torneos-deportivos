@@ -6,9 +6,9 @@ from db.models.match import Match, Round
 from db.repositories.base import BaseRepository
 
 class MatchRepository(BaseRepository[Match]):
-    async def get_matches_by_tournament(self, db: AsyncSession, tournament_id: str) -> List[Match]:
+    async def get_matches_by_category(self, db: AsyncSession, category_id: str) -> List[Match]:
         query = select(self.model).join(Round).where(
-            self.model.tournament_id == tournament_id
+            self.model.category_id == category_id
         ).options(
             joinedload(self.model.team1),
             joinedload(self.model.team2),
@@ -20,9 +20,9 @@ class MatchRepository(BaseRepository[Match]):
 match_repo = MatchRepository(Match)
 
 class RoundRepository(BaseRepository[Round]):
-    async def get_rounds_by_tournament(self, db: AsyncSession, tournament_id: str) -> List[Round]:
+    async def get_rounds_by_category(self, db: AsyncSession, category_id: str) -> List[Round]:
         query = select(self.model).where(
-            self.model.tournament_id == tournament_id
+            self.model.category_id == category_id
         ).order_by(self.model.round_number)
         result = await db.execute(query)
         return result.scalars().all()

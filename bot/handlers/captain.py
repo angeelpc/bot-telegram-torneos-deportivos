@@ -6,6 +6,8 @@ from db.database import AsyncSessionLocal
 from db.repositories.tournament_repo import tournament_repo
 from db.repositories.user_repo import user_repo
 from db.repositories.team_repo import team_repo
+from db.repositories.category_repo import category_repo
+from bot.keyboards.inline import get_categories_keyboard
 
 captain_router = Router()
 
@@ -23,14 +25,25 @@ async def join_tournament(message: types.Message, command: CommandObject, state:
                 await message.answer("El registro para este torneo está cerrado.")
                 return
             
-            await state.update_data(tournament_id=tournament_id)
-            await message.answer(f"Has sido invitado al torneo <b>{tournament.name}</b>.\n\nEscribe el nombre de tu equipo para registrarte:")
-            await state.set_state(TeamRegisterStates.waiting_for_team_name)
+            categories = await category_repo.get_by_tournament(db, tournament_id)
+            if not categories:
+                await message.answer("Este torneo no tiene categorías definidas aún.")
+                return
+                
+            await message.answer(f"Has sido invitado al torneo <b>{tournament.name}</b>.\n\nPor favor, selecciona a qué categoría quieres inscribir a tu equipo:", reply_markup=get_categories_keyboard(categories))
+
+@captain_router.callback_query(lambda c: c.data and c.data.startswith('join_cat_'))
+async def select_category(callback_query: types.CallbackQuery, state: FSMContext):
+    category_id = callback_query.data.split('join_cat_')[1]
+    await state.update_data(category_id=category_id)
+    await callback_query.message.answer("✍️ Excelente. Ahora escribe el nombre de tu equipo para registrarte:")
+    await state.set_state(TeamRegisterStates.waiting_for_team_name)
+    await callback_query.answer()
 
 @captain_router.message(TeamRegisterStates.waiting_for_team_name)
 async def process_team_name(message: types.Message, state: FSMContext):
     data = await state.get_data()
-    tournament_id = data['tournament_id']
+    category_id = data['category_id']
     team_name = message.text
     
     async with AsyncSessionLocal() as db:
@@ -41,7 +54,7 @@ async def process_team_name(message: types.Message, state: FSMContext):
             
         # 2. Registrar equipo
         team = await team_repo.create(db, obj_in={
-            "tournament_id": tournament_id,
+            "category_id": category_id,
             "name": team_name,
             "captain_id": user.id,
             "status": "approved" # Para el MVP lo auto-aprobaremos para simplificar, aunque el prompt sugiere aprobar/rechazar.

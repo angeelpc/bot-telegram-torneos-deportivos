@@ -7,6 +7,7 @@ from db.database import AsyncSessionLocal
 from services.tournament_service import tournament_service
 from services.bracket_service import bracket_service
 from db.repositories.tournament_repo import tournament_repo
+from db.repositories.category_repo import category_repo
 from core.config import settings
 
 organizer_router = Router()
@@ -26,10 +27,21 @@ async def process_tournament_name(message: types.Message, state: FSMContext):
 async def process_tournament_description(message: types.Message, state: FSMContext):
     data = await state.get_data()
     name = data['name']
-    description = message.text
+    await state.update_data(description=message.text)
+    await message.answer("📁 Escribe las categorías de este torneo separadas por comas (ej. 2011-2012, Libre Femenil, Dominical):")
+    await state.set_state(TournamentCreateStates.waiting_for_categories)
+
+@organizer_router.message(TournamentCreateStates.waiting_for_categories)
+async def process_tournament_categories(message: types.Message, state: FSMContext):
+    data = await state.get_data()
+    name = data['name']
+    description = data['description']
+    categories_str = message.text
     
     async with AsyncSessionLocal() as db:
-        tournament = await tournament_service.create_tournament(db, name, description, message.from_user.id)
+        tournament, categories = await tournament_service.create_tournament(
+            db, name, description, categories_str, message.from_user.id
+        )
         
     await state.clear()
     
@@ -39,7 +51,8 @@ async def process_tournament_description(message: types.Message, state: FSMConte
     await message.answer(
         f"✅ <b>Torneo Creado Exitosamente</b>\n\n"
         f"<b>Nombre:</b> {name}\n"
-        f"<b>Descripción:</b> {description}\n\n"
+        f"<b>Descripción:</b> {description}\n"
+        f"<b>Categorías:</b> {len(categories)}\n\n"
         f"Para que los equipos se registren, comparte este enlace:\n{join_link}",
         reply_markup=get_organizer_menu(tournament.id)
     )
@@ -80,14 +93,28 @@ async def process_generate_bracket(callback_query: types.CallbackQuery):
     tournament_id = callback_query.data.split('_')[2]
     async with AsyncSessionLocal() as db:
         try:
-            success = await bracket_service.generate_bracket(db, tournament_id)
-            if success:
-                await callback_query.answer("Bracket generado exitosamente.")
-                await callback_query.message.answer("🌳 ¡Bracket generado! Usa /bracket para verlo y /partidos para administrar los encuentros.")
-        except ValueError as e:
-            await callback_query.answer(str(e), show_alert=True)
+            categories = await category_repo.get_by_tournament(db, tournament_id)
+            if not categories:
+                await callback_query.answer("No hay categorías en este torneo.", show_alert=True)
+                return
+            
+            success_count = 0
+            for cat in categories:
+                try:
+                    success = await bracket_service.generate_bracket(db, cat.id)
+                    if success:
+                        success_count += 1
+                except ValueError as e:
+                    # Some categories might not have enough teams, skip or alert
+                    pass
+            
+            if success_count > 0:
+                await callback_query.answer("Brackets generados exitosamente.")
+                await callback_query.message.answer(f"🌳 ¡{success_count} brackets generados! Usa /bracket para verlos.")
+            else:
+                await callback_query.answer("No se pudo generar ningún bracket. Faltan equipos aprobados.", show_alert=True)
         except Exception as e:
-            await callback_query.answer("Ocurrió un error inesperado al generar el bracket.", show_alert=True)
+            await callback_query.answer("Ocurrió un error inesperado al generar los brackets.", show_alert=True)
 
 @organizer_router.callback_query(lambda c: c.data and c.data.startswith('org_'))
 async def process_unimplemented_features(callback_query: types.CallbackQuery):

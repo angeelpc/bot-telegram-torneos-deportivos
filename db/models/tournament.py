@@ -16,5 +16,4 @@ class Tournament(Base):
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
     organizer = relationship("User")
-    teams = relationship("Team", back_populates="tournament")
-    rounds = relationship("Round", back_populates="tournament")
+    categories = relationship("Category", back_populates="tournament")

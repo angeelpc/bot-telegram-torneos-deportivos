@@ -16,6 +16,13 @@ def get_organizer_menu(tournament_id: str) -> InlineKeyboardMarkup:
     )
     return builder.as_markup()
 
+def get_categories_keyboard(categories: list) -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    for cat in categories:
+        builder.button(text=f"📁 {cat.name}", callback_data=f"join_cat_{cat.id}")
+    builder.adjust(1)
+    return builder.as_markup()
+
 def get_join_tournament_keyboard(tournament_id: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="✍️ Registrar mi Equipo", callback_data=f"join_{tournament_id}")

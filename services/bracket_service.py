@@ -6,7 +6,8 @@ from db.models.tournament import Tournament
 from db.models.team import Team
 from db.models.match import Round, Match
 from db.repositories.match_repo import round_repo, match_repo
-from db.repositories.tournament_repo import tournament_repo
+from db.repositories.match_repo import round_repo, match_repo
+from db.repositories.category_repo import category_repo
 from db.repositories.team_repo import team_repo
 
 class BracketService:
@@ -30,13 +31,13 @@ class BracketService:
         else:
             return f"Ronda {round_number}"
 
-    async def generate_bracket(self, db: AsyncSession, tournament_id: str) -> bool:
+    async def generate_bracket(self, db: AsyncSession, category_id: str) -> bool:
         # 1. Validaciones
-        tournament = await tournament_repo.get(db, tournament_id)
-        if not tournament or tournament.status != "registration_closed":
-            raise ValueError("El torneo no está cerrado o no existe.")
+        category = await category_repo.get_by_id(db, category_id)
+        if not category:
+            raise ValueError("La categoría no existe.")
 
-        teams = await team_repo.get_approved_teams(db, tournament_id)
+        teams = await team_repo.get_approved_teams(db, category_id)
         if len(teams) < 2:
             raise ValueError("Se necesitan al menos 2 equipos para generar el bracket.")
 
@@ -85,7 +86,7 @@ class BracketService:
         rounds_dict = {}
         for r_num in range(1, total_rounds + 1):
             r = await round_repo.create(db, obj_in={
-                "tournament_id": tournament_id,
+                "category_id": category_id,
                 "round_number": r_num,
                 "name": self.get_round_name(r_num, total_rounds)
             })
@@ -107,7 +108,7 @@ class BracketService:
                     next_match_id = matches_by_round[r_num + 1][parent_match_idx].id
                 
                 match = await match_repo.create(db, obj_in={
-                    "tournament_id": tournament_id,
+                    "category_id": category_id,
                     "round_id": rounds_dict[r_num]["entity"].id,
                     "next_match_id": next_match_id
                 })
@@ -137,8 +138,7 @@ class BracketService:
             
             await match_repo.update(db, db_obj=match, obj_in=update_data)
 
-        # 7. Actualizar el estado del torneo
-        tournament.status = "bracket_generated"
+        # 7. Finalizado
         await db.commit()
         return True
 

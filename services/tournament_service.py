@@ -1,9 +1,10 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from db.repositories.tournament_repo import tournament_repo
 from db.repositories.user_repo import user_repo
+from db.repositories.category_repo import category_repo
 
 class TournamentService:
-    async def create_tournament(self, db: AsyncSession, name: str, description: str, organizer_telegram_id: int):
+    async def create_tournament(self, db: AsyncSession, name: str, description: str, categories_str: str, organizer_telegram_id: int):
         # 1. Buscar al organizador o crearlo
         user = await user_repo.get_by_telegram_id(db, organizer_telegram_id)
         if not user:
@@ -16,7 +17,15 @@ class TournamentService:
             "organizer_id": user.id,
             "status": "registration_open"
         })
-        return tournament
+        
+        # 3. Crear categorías
+        categories = []
+        for cat_name in categories_str.split(','):
+            cat_name = cat_name.strip()
+            if cat_name:
+                categories.append(await category_repo.create(db, tournament.id, cat_name))
+        
+        return tournament, categories
 
     async def close_registration(self, db: AsyncSession, tournament_id: str):
         tournament = await tournament_repo.get(db, tournament_id)

@@ -8,13 +8,13 @@ class Team(Base):
     __tablename__ = "teams"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=generate_uuid)
-    tournament_id = Column(UUID(as_uuid=False), ForeignKey("tournaments.id"), nullable=False)
+    category_id = Column(UUID(as_uuid=False), ForeignKey("categories.id"), nullable=False)
     name = Column(String, nullable=False)
     captain_id = Column(UUID(as_uuid=False), ForeignKey("users.id"), nullable=False)
     status = Column(String, default="pending", nullable=False) # pending, approved, rejected
     created_at = Column(DateTime(timezone=True), default=utc_now)
 
-    tournament = relationship("Tournament", back_populates="teams")
+    category = relationship("Category", back_populates="teams")
     captain = relationship("User")
     members = relationship("TeamMember", back_populates="team")
 

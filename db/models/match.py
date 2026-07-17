@@ -8,18 +8,18 @@ class Round(Base):
     __tablename__ = "rounds"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=generate_uuid)
-    tournament_id = Column(UUID(as_uuid=False), ForeignKey("tournaments.id"), nullable=False)
+    category_id = Column(UUID(as_uuid=False), ForeignKey("categories.id"), nullable=False)
     round_number = Column(Integer, nullable=False) # 1, 2, 3...
     name = Column(String, nullable=False) # Octavos, Cuartos, Semifinal, Final
     
-    tournament = relationship("Tournament", back_populates="rounds")
+    category = relationship("Category", back_populates="rounds")
     matches = relationship("Match", back_populates="round")
 
 class Match(Base):
     __tablename__ = "matches"
 
     id = Column(UUID(as_uuid=False), primary_key=True, default=generate_uuid)
-    tournament_id = Column(UUID(as_uuid=False), ForeignKey("tournaments.id"), nullable=False)
+    category_id = Column(UUID(as_uuid=False), ForeignKey("categories.id"), nullable=False)
     round_id = Column(UUID(as_uuid=False), ForeignKey("rounds.id"), nullable=False)
     
     team1_id = Column(UUID(as_uuid=False), ForeignKey("teams.id"), nullable=True) # Puede ser Null temporalmente
