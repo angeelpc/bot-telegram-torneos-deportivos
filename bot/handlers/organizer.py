@@ -88,3 +88,8 @@ async def process_generate_bracket(callback_query: types.CallbackQuery):
             await callback_query.answer(str(e), show_alert=True)
         except Exception as e:
             await callback_query.answer("Ocurrió un error inesperado al generar el bracket.", show_alert=True)
+
+@organizer_router.callback_query(lambda c: c.data and c.data.startswith('org_'))
+async def process_unimplemented_features(callback_query: types.CallbackQuery):
+    # Catch-all for buttons that don't have logic yet
+    await callback_query.answer("🛠️ ¡Esta función está en desarrollo! Pronto estará disponible.", show_alert=True)
