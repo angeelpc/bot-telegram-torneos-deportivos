@@ -27,14 +27,22 @@ WEBHOOK_URL = f"{settings.app_base_url}{WEBHOOK_PATH}"
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Configurando webhook...")
-    await bot.set_webhook(
-        url=WEBHOOK_URL,
-        secret_token=settings.telegram_webhook_secret,
-        allowed_updates=dp.resolve_used_update_types()
-    )
+    try:
+        await bot.set_webhook(
+            url=WEBHOOK_URL,
+            secret_token=settings.telegram_webhook_secret,
+            allowed_updates=dp.resolve_used_update_types()
+        )
+        logger.info("Webhook configurado exitosamente con Telegram.")
+    except Exception as e:
+        logger.error(f"¡ERROR FATAL AL CONFIGURAR WEBHOOK!: {e}")
+        logger.error("El bot encenderá, pero Telegram no le enviará mensajes hasta corregir esto.")
     yield
     logger.info("Eliminando webhook...")
-    await bot.delete_webhook()
+    try:
+        await bot.delete_webhook()
+    except:
+        pass
     await bot.session.close()
 
 app = FastAPI(lifespan=lifespan)
