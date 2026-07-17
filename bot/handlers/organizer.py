@@ -2,7 +2,7 @@ from aiogram import Router, types
 from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from bot.states.states import TournamentCreateStates
-from bot.keyboards.inline import get_organizer_menu
+from bot.keyboards.inline import get_organizer_menu, get_tournament_summary_keyboard
 from db.database import AsyncSessionLocal
 from services.tournament_service import tournament_service
 from services.bracket_service import bracket_service
@@ -34,21 +34,56 @@ async def process_tournament_description(message: types.Message, state: FSMConte
 @organizer_router.message(TournamentCreateStates.waiting_for_categories)
 async def process_tournament_categories(message: types.Message, state: FSMContext):
     data = await state.get_data()
-    name = data['name']
-    description = data['description']
+    name = data.get('name', 'Sin Nombre')
+    description = data.get('description', 'Sin Descripción')
     categories_str = message.text
     
+    await state.update_data(categories=categories_str)
+    
+    await message.answer(
+        f"📊 <b>Resumen del Torneo</b>\n\n"
+        f"<b>Nombre:</b> {name}\n"
+        f"<b>Descripción:</b> {description}\n"
+        f"<b>Categorías:</b> {categories_str}\n\n"
+        f"¿Qué deseas hacer?",
+        reply_markup=get_tournament_summary_keyboard()
+    )
+
+@organizer_router.callback_query(lambda c: c.data == "edit_name")
+async def process_edit_name(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.answer("🏆 Ingresa el nuevo nombre de tu torneo:")
+    await state.set_state(TournamentCreateStates.waiting_for_name)
+    await callback_query.answer()
+
+@organizer_router.callback_query(lambda c: c.data == "edit_categories")
+async def process_edit_categories(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.answer("📁 Escribe las nuevas categorías de este torneo separadas por comas:")
+    await state.set_state(TournamentCreateStates.waiting_for_categories)
+    await callback_query.answer()
+
+@organizer_router.callback_query(lambda c: c.data == "save_tournament")
+async def process_save_tournament(callback_query: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    name = data.get('name')
+    description = data.get('description')
+    categories_str = data.get('categories')
+    
+    if not name or not categories_str:
+        await callback_query.answer("Faltan datos del torneo.", show_alert=True)
+        return
+        
     async with AsyncSessionLocal() as db:
         tournament, categories = await tournament_service.create_tournament(
-            db, name, description, categories_str, message.from_user.id
+            db, name, description, categories_str, callback_query.from_user.id
         )
         
     await state.clear()
     
     # Generar enlace de invitación de ejemplo (Deep linking)
-    join_link = f"https://t.me/{(await message.bot.get_me()).username}?start=join_{tournament.id}"
+    bot = callback_query.bot
+    join_link = f"https://t.me/{(await bot.get_me()).username}?start=join_{tournament.id}"
     
-    await message.answer(
+    await callback_query.message.edit_text(
         f"✅ <b>Torneo Creado Exitosamente</b>\n\n"
         f"<b>Nombre:</b> {name}\n"
         f"<b>Descripción:</b> {description}\n"

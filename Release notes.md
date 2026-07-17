@@ -48,3 +48,42 @@
 - `alembic upgrade head`
   - *Salida:* `INFO [alembic.runtime.migration] Running upgrade 804d96ded152 -> bd990dfa418d, Add categories`
   - Aplicó físicamente las alteraciones a las tablas de la base de datos sin pérdida de datos.
+
+## Versión 2.1 (Manuales Operativos)
+
+### Cambios
+- Se creó el directorio `docs/` en la raíz del proyecto.
+- Se redactaron 4 manuales detallados en formato Markdown:
+  - `manual_administrador_liga.md`: Guía para la creación de torneos, categorías, cierre de inscripciones y brackets.
+  - `manual_capitan_usuario.md`: Guía de registro de equipos mediante deep links.
+  - `manual_arbitro.md`: Guía proyectada para el reporte de resultados e incidencias (Visión a futuro).
+  - `manual_administrador_proyecto.md`: Guía técnica para el Product Owner sobre arquitectura, despliegue en Railway y manejo de base de datos con Alembic.
+
+### Comandos Ejecutados y Salida
+- Creación de archivos a través de las herramientas de escritura, generando directamente la carpeta `docs` y los 4 archivos markdown.
+  - *Salida:* Éxito en la creación de los manuales operativos con el contenido especificado en español.
+
+## Versión 2.1 (Mejoras de UX/UI)
+
+### Cambios
+- Se agregaron botones de "Volver" en los teclados de `bot/keyboards/inline.py` (`get_categories_keyboard`, `get_join_tournament_keyboard`, `get_team_approval_keyboard`).
+- Se modificó el flujo de creación de torneos en `bot/handlers/organizer.py` para mostrar un resumen interactivo.
+- Se agregaron opciones para Editar Nombre, Editar Categorías y Guardar Torneo, difiriendo la persistencia en base de datos hasta que el usuario confirma.
+
+### Comandos Ejecutados y Salida
+- Modificación directa de código mediante herramientas de edición locales. No se requirieron comandos de terminal específicos.
+  - *Salida:* Código modificado con éxito y validado en los archivos `inline.py` y `organizer.py`.
+
+## Versión 2.1 (Estrategia y Automatización)
+
+### Cambios
+- Creación de documentación estratégica y comercial en `docs/estrategia_y_automatizacion.md`.
+- Definición de modelo de negocio y ventas (SaaS, cobros por equipos, patrocinios).
+- Definición de automatizaciones clave para el sistema (recordatorios de 24h, progresión automática de brackets, suspensión por tarjetas rojas).
+- Diseño y justificación técnica para la viabilidad web usando Arquitectura Headless conectando React/Next.js a FastAPI/Postgres.
+
+### Comandos Ejecutados y Salida
+- `New-Item -ItemType Directory -Force -Path "docs"` (Simulado a través de la herramienta de escritura de archivos)
+  - *Salida:* Creación del directorio docs para almacenar documentación del proyecto.
+- `New-Item -Path "docs/estrategia_y_automatizacion.md"` (Simulado a través de la herramienta de escritura de archivos)
+  - *Salida:* Archivo creado exitosamente con la definición del módulo 3.

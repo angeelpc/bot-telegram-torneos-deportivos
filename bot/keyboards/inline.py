@@ -21,15 +21,29 @@ def get_categories_keyboard(categories: list) -> InlineKeyboardMarkup:
     for cat in categories:
         builder.button(text=f"📁 {cat.name}", callback_data=f"join_cat_{cat.id}")
     builder.adjust(1)
+    builder.row(InlineKeyboardButton(text="🔙 Volver", callback_data="volver"))
     return builder.as_markup()
 
 def get_join_tournament_keyboard(tournament_id: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="✍️ Registrar mi Equipo", callback_data=f"join_{tournament_id}")
+    builder.row(InlineKeyboardButton(text="🔙 Volver", callback_data="volver"))
     return builder.as_markup()
 
 def get_team_approval_keyboard(team_id: str) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="✅ Aprobar", callback_data=f"approve_{team_id}")
     builder.button(text="❌ Rechazar", callback_data=f"reject_{team_id}")
+    builder.row(InlineKeyboardButton(text="🔙 Volver", callback_data="volver"))
+    return builder.as_markup()
+
+def get_tournament_summary_keyboard() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.row(
+        InlineKeyboardButton(text="✏️ Editar Nombre", callback_data="edit_name"),
+        InlineKeyboardButton(text="📁 Editar Categorías", callback_data="edit_categories")
+    )
+    builder.row(
+        InlineKeyboardButton(text="💾 Guardar Torneo", callback_data="save_tournament")
+    )
     return builder.as_markup()
